@@ -27,6 +27,8 @@
 #include "tplib.h"
 
 #define KEEP_6BITS 0x3C
+#define FRAME_SHIFT(index, next_base) \
+  (((index << 2) & KEEP_6BITS) | basebits[next_base])
 
 /* The following matrix encodes the Universal genetic code.  During
    execution any matrix supplied via the -m option will overwrite it */
@@ -87,8 +89,7 @@ int compilemx(char *filename)
 
   if ((f = fopen(filename, "r")) == NULL)
   {
-    /* Don't bother with the environment if an absolute path was
- given */
+    /* Don't bother with the environment if an absolute path was given */
     if (filename[0] != '/')
     {
       if ((r = getenv("TP_TXMDIR")) != NULL)
@@ -195,7 +196,7 @@ void initbasebits(void)
    No sanity checking is performed here. output_aa_seq_length is an array of six
    integers, which will take the lengths of the translated sequences.
 
-   This code is ugly as hell, but it is *very* fast, for the following reasons:
+   This code is not pretty, but it is *very* fast, for the following reasons:
 
    Threefold loop unrolling, and very fast bit shift and comparison
    operators results in only four conditionals executed per loop
@@ -209,9 +210,9 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
 {
   int input_sequence_length, codon_remainder, index;
   char *p, *input_sequence_end, *rev_frame_3, *rev_frame_4, *rev_frame_5;
-  char *r0 = output_aa_sequence[0];
-  char *r1 = output_aa_sequence[1];
-  char *r2 = output_aa_sequence[2];
+  char *fwd_frame_0 = output_aa_sequence[0];
+  char *fwd_frame_1 = output_aa_sequence[1];
+  char *fwd_frame_2 = output_aa_sequence[2];
 
   input_sequence_length = strlen(input_dna_sequence);
   input_sequence_end = &input_dna_sequence[input_sequence_length] - 5;
@@ -253,7 +254,8 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
   rev_frame_4--;
   rev_frame_5--;
 
-  index = (basebits[input_dna_sequence[0]] << 2) | basebits[input_dna_sequence[1]];
+  /* Initialise index with first two bases */
+  index = FRAME_SHIFT(basebits[input_dna_sequence[0]], input_dna_sequence[1]);
 
   /* OK, that's all the preamble, now lets get to the
    * main loop! */
@@ -262,23 +264,23 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
   {
 
     /* Frame 0/3 */
-    index = ((index << 2) & KEEP_6BITS) | basebits[p[2]];
+    index = FRAME_SHIFT(index, p[2]);
 
-    *r0++ = ((char *)matrix)[index];
+    *fwd_frame_0++ = ((char *)matrix)[index];
     *rev_frame_3-- = ((char *)revmatrix)[index];
 
     /* Frame 1/4 */
 
-    index = ((index << 2) & KEEP_6BITS) | basebits[p[3]];
+    index = FRAME_SHIFT(index, p[3]);
 
-    *r1++ = ((char *)matrix)[index];
+    *fwd_frame_1++ = ((char *)matrix)[index];
     *rev_frame_4-- = ((char *)revmatrix)[index];
 
     /* Frame 2/5 */
 
-    index = ((index << 2) & KEEP_6BITS) | basebits[p[4]];
+    index = FRAME_SHIFT(index, p[4]);
 
-    *r2++ = ((char *)matrix)[index];
+    *fwd_frame_2++ = ((char *)matrix)[index];
     *rev_frame_5-- = ((char *)revmatrix)[index];
   }
 
@@ -287,23 +289,23 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
 
   if (codon_remainder < 2)
   {
-    index = ((index << 2) & KEEP_6BITS) | basebits[p[2]];
+    index = FRAME_SHIFT(index, p[2]);
 
-    *r0++ = ((char *)matrix)[index];
+    *fwd_frame_0++ = ((char *)matrix)[index];
     *rev_frame_3-- = ((char *)revmatrix)[index];
 
     if (codon_remainder == 1)
     {
-      index = ((index << 2) & KEEP_6BITS) | basebits[p[3]];
+      index = FRAME_SHIFT(index, p[3]);
 
-      *r1++ = ((char *)matrix)[index];
+      *fwd_frame_1++ = ((char *)matrix)[index];
       *rev_frame_4-- = ((char *)revmatrix)[index];
     }
   }
 
   /* And that's it... */
 
-  *r0 = *r1 = *r2 = '\0';
+  *fwd_frame_0 = *fwd_frame_1 = *fwd_frame_2 = '\0';
 }
 
 #ifdef NVSN
