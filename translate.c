@@ -262,24 +262,15 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
 
   for (p = input_dna_sequence; p <= input_sequence_end; p += 3)
   {
-
-    /* Frame 0/3 */
     index = FRAME_SHIFT(index, p[2]);
-
     *fwd_frame_0++ = ((char *)matrix)[index];
     *rev_frame_3-- = ((char *)revmatrix)[index];
 
-    /* Frame 1/4 */
-
     index = FRAME_SHIFT(index, p[3]);
-
     *fwd_frame_1++ = ((char *)matrix)[index];
     *rev_frame_4-- = ((char *)revmatrix)[index];
 
-    /* Frame 2/5 */
-
     index = FRAME_SHIFT(index, p[4]);
-
     *fwd_frame_2++ = ((char *)matrix)[index];
     *rev_frame_5-- = ((char *)revmatrix)[index];
   }
@@ -290,14 +281,12 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
   if (codon_remainder < 2)
   {
     index = FRAME_SHIFT(index, p[2]);
-
     *fwd_frame_0++ = ((char *)matrix)[index];
     *rev_frame_3-- = ((char *)revmatrix)[index];
 
     if (codon_remainder == 1)
     {
       index = FRAME_SHIFT(index, p[3]);
-
       *fwd_frame_1++ = ((char *)matrix)[index];
       *rev_frame_4-- = ((char *)revmatrix)[index];
     }
