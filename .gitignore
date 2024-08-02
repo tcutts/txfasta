@@ -1,0 +1,4 @@
+*.o
+txfasta
+*~
+test-out.fa
