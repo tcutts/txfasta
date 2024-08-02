@@ -26,6 +26,8 @@
 
 #include "tplib.h"
 
+#define KEEP_6BITS 0x3C
+
 /* The following matrix encodes the Universal genetic code.  During
    execution any matrix supplied via the -m option will overwrite it */
 
@@ -260,21 +262,21 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
   {
 
     /* Frame 0/3 */
-    index = ((index << 2) & 0x3C) | basebits[p[2]];
+    index = ((index << 2) & KEEP_6BITS) | basebits[p[2]];
 
     *r0++ = ((char *)matrix)[index];
     *rev_frame_3-- = ((char *)revmatrix)[index];
 
     /* Frame 1/4 */
 
-    index = ((index << 2) & 0x3C) | basebits[p[3]];
+    index = ((index << 2) & KEEP_6BITS) | basebits[p[3]];
 
     *r1++ = ((char *)matrix)[index];
     *rev_frame_4-- = ((char *)revmatrix)[index];
 
     /* Frame 2/5 */
 
-    index = ((index << 2) & 0x3C) | basebits[p[4]];
+    index = ((index << 2) & KEEP_6BITS) | basebits[p[4]];
 
     *r2++ = ((char *)matrix)[index];
     *rev_frame_5-- = ((char *)revmatrix)[index];
@@ -285,14 +287,14 @@ void translate(char *input_dna_sequence, char **output_aa_sequence, int *output_
 
   if (codon_remainder < 2)
   {
-    index = ((index << 2) & 0x3C) | basebits[p[2]];
+    index = ((index << 2) & KEEP_6BITS) | basebits[p[2]];
 
     *r0++ = ((char *)matrix)[index];
     *rev_frame_3-- = ((char *)revmatrix)[index];
 
     if (codon_remainder == 1)
     {
-      index = ((index << 2) & 0x3C) | basebits[p[3]];
+      index = ((index << 2) & KEEP_6BITS) | basebits[p[3]];
 
       *r1++ = ((char *)matrix)[index];
       *rev_frame_4-- = ((char *)revmatrix)[index];
